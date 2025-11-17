@@ -26,6 +26,7 @@ let ttsWorkletNode = null;
 
 let isTTSPlaying = false;
 let ignoreIncomingTTS = false;
+let micEnabled = true;  // Microphone mute state
 
 let chatHistory = [];
 let typingUser = "";
@@ -53,6 +54,13 @@ function initBatch() {
 }
 
 function flushBatch() {
+  // Don't send audio if mic is muted
+  if (!micEnabled) {
+    bufferPool.push(batchBuffer);
+    batchBuffer = null;
+    return;
+  }
+
   const ts = Date.now() & 0xFFFFFFFF;
   batchView.setUint32(0, ts, false);
   const flags = isTTSPlaying ? 1 : 0;
@@ -182,6 +190,10 @@ function cleanupAudio() {
     mediaStream.getAudioTracks().forEach(track => track.stop());
     mediaStream = null;
   }
+  // Disable controls when stopping
+  document.getElementById("toggleMicBtn").disabled = true;
+  document.getElementById("textInput").disabled = true;
+  document.getElementById("sendBtn").disabled = true;
 }
 
 function renderMessages() {
@@ -364,7 +376,10 @@ document.getElementById("startBtn").onclick = async () => {
     statusDiv.textContent = "Connected. Activating mic and TTS…";
     await startRawPcmCapture();
     await setupTTSPlayback();
-    speedSlider.disabled = false; 
+    speedSlider.disabled = false;
+    toggleMicBtn.disabled = false;
+    textInput.disabled = false;
+    sendBtn.disabled = false;
   };
 
   socket.onmessage = (evt) => {
@@ -406,11 +421,71 @@ document.getElementById("copyBtn").onclick = () => {
   const text = chatHistory
     .map(msg => `${msg.role.charAt(0).toUpperCase() + msg.role.slice(1)}: ${msg.content}`)
     .join('\n');
-  
+
   navigator.clipboard.writeText(text)
     .then(() => console.log("Conversation copied to clipboard"))
     .catch(err => console.error("Copy failed:", err));
 };
+
+// Mute microphone toggle
+const toggleMicBtn = document.getElementById("toggleMicBtn");
+const micIcon = document.getElementById("micIcon");
+const micText = document.getElementById("micText");
+
+toggleMicBtn.onclick = () => {
+  micEnabled = !micEnabled;
+
+  if (micEnabled) {
+    // Mic is ON
+    toggleMicBtn.classList.remove('muted');
+    micText.textContent = 'Mic On';
+    micIcon.innerHTML = `
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="currentColor"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    `;
+    console.log('Microphone unmuted');
+  } else {
+    // Mic is OFF (muted)
+    toggleMicBtn.classList.add('muted');
+    micText.textContent = 'Mic Off';
+    micIcon.innerHTML = `
+      <path d="M2 2l20 20M15 9.34V5a3 3 0 0 0-5.94-.6M9 9v3a3 3 0 0 0 5.12 2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    `;
+    console.log('Microphone muted');
+  }
+};
+
+// Text input handlers
+const textInput = document.getElementById("textInput");
+const sendBtn = document.getElementById("sendBtn");
+
+sendBtn.onclick = async () => {
+  const text = textInput.value.trim();
+  if (!text || !socket || socket.readyState !== WebSocket.OPEN) return;
+
+  // Clear input
+  textInput.value = "";
+
+  // Add to chat history and display
+  chatHistory.push({ role: "user", content: text });
+  renderMessages();
+
+  // Send text message to backend
+  socket.send(JSON.stringify({
+    type: "user_text",
+    text: text
+  }));
+
+  console.log("Sent text message:", text);
+};
+
+// Handle Enter key in text input
+textInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !textInput.disabled) {
+    sendBtn.onclick();
+  }
+});
 
 // First render
 renderMessages();
