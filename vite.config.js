@@ -4,7 +4,7 @@ export default defineConfig({
   // Server configuration for development
   server: {
     port: 3000,
-    open: true,
+    open: false,  // Don't open browser (we're using Tauri)
     // Enable CORS for development
     cors: true
   },
