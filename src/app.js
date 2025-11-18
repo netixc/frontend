@@ -70,7 +70,7 @@ const createAgentForm = document.getElementById("createAgentForm");
 
 // Event logging - matching RealtimeVoiceClient implementation
 let events = [];
-let eventFilter = 'all'; // 'all' or 'agent'
+let eventFilter = 'agent'; // 'all' or 'agent' - default to agent events only
 
 function logEvent(type, data) {
   const event = {
@@ -812,19 +812,6 @@ textInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter' && !textInput.disabled) {
     sendBtn.onclick();
   }
-});
-
-// Event filter handlers
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    // Update active state
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    // Update filter and re-render
-    eventFilter = btn.getAttribute('data-filter');
-    renderEvents();
-  });
 });
 
 // First render
