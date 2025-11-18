@@ -262,9 +262,8 @@
       -webkit-overflow-scrolling: touch;
     }
     .settings-form {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
+      display: block;
+      width: 100%;
     }
     .modal-footer {
       padding: 16px 24px;
@@ -868,8 +867,8 @@
         <button type="button" class="settings-tab" data-settings-tab="application">Application</button>
       </div>
 
-      <form id="settingsForm">
-        <div class="modal-body">
+      <div class="modal-body">
+        <form id="settingsForm"  class="settings-form">
           <!-- General Tab -->
           <div class="settings-tab-panel active" id="generalPanel">
             <div class="form-group">
@@ -1024,9 +1023,9 @@
           <small>Maximum size of the audio processing queue (default: 50)</small>
           </div>
         </div>
+        </form>
+      </div>
 
-        </div>
-      </form>
       <div class="modal-footer">
         <button type="submit" form="settingsForm" class="btn save-btn">Save Settings</button>
       </div>
