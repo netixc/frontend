@@ -649,6 +649,7 @@ const backendUrlInput = document.getElementById('backendUrl');
 settingsBtn.onclick = () => {
   const settings = loadSettings();
   backendUrlInput.value = settings.backendUrl || '';
+  document.getElementById('wakewordToggle').checked = settings.wakewordEnabled || false;
   settingsModal.classList.add('show');
 };
 
@@ -665,7 +666,8 @@ settingsModal.onclick = (e) => {
 settingsForm.onsubmit = (e) => {
   e.preventDefault();
   const settings = {
-    backendUrl: backendUrlInput.value.trim()
+    backendUrl: backendUrlInput.value.trim(),
+    wakewordEnabled: document.getElementById('wakewordToggle').checked
   };
   saveSettings(settings);
   settingsModal.classList.remove('show');
@@ -690,6 +692,17 @@ document.getElementById("startBtn").onclick = async () => {
   socket.onopen = async () => {
     statusDiv.textContent = "Connected. Activating mic and TTS…";
     logEvent('connection', 'WebSocket connected');
+
+    // Send wakeword setting to backend
+    const settings = loadSettings();
+    if (settings.wakewordEnabled !== undefined) {
+      socket.send(JSON.stringify({
+        type: 'set_wakeword',
+        enabled: settings.wakewordEnabled
+      }));
+      console.log('Sent wakeword setting:', settings.wakewordEnabled);
+    }
+
     await startRawPcmCapture();
     await setupTTSPlayback();
     speedSlider.disabled = false;
