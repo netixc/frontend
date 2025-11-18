@@ -285,7 +285,7 @@
       font-weight: 500;
       color: #333;
     }
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
@@ -293,9 +293,13 @@
       font-size: 1rem;
       box-sizing: border-box;
     }
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       outline: none;
       border-color: var(--primary);
+    }
+    .form-group select {
+      background: white;
+      cursor: pointer;
     }
     .form-group small {
       display: block;
@@ -815,6 +819,97 @@
             </div>
           </label>
         </div>
+
+        <!-- Speech Settings -->
+        <h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--primary); font-size: 1.1rem;">Speech & Voice</h3>
+
+        <div class="form-group">
+          <label for="speechLanguage">Speech Language</label>
+          <select id="speechLanguage">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="nl">Dutch</option>
+            <option value="pl">Polish</option>
+            <option value="ru">Russian</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+          </select>
+          <small>Language for speech recognition</small>
+        </div>
+
+        <div class="form-group">
+          <label for="ttsVoice">TTS Voice</label>
+          <select id="ttsVoice">
+            <option value="af_heart">Female - Heart (Default)</option>
+            <option value="af_bella">Female - Bella</option>
+            <option value="af_nicole">Female - Nicole</option>
+            <option value="af_sarah">Female - Sarah</option>
+            <option value="af_sky">Female - Sky</option>
+            <option value="am_adam">Male - Adam</option>
+            <option value="am_michael">Male - Michael</option>
+            <option value="bf_emma">British Female - Emma</option>
+            <option value="bf_isabella">British Female - Isabella</option>
+            <option value="bm_george">British Male - George</option>
+            <option value="bm_lewis">British Male - Lewis</option>
+            <option value="custom">Custom Voice...</option>
+          </select>
+          <small>Voice for text-to-speech</small>
+        </div>
+
+        <div class="form-group" id="customVoiceGroup" style="display: none;">
+          <label for="customVoiceName">Custom Voice Name</label>
+          <input type="text" id="customVoiceName" placeholder="Enter custom voice name">
+          <small>Enter the exact voice name supported by your TTS engine</small>
+        </div>
+
+        <div class="form-group">
+          <label for="speechSpeed">Speech Speed</label>
+          <input type="range" id="speechSpeedSetting" min="50" max="200" value="126" step="1">
+          <div class="speed-labels">
+            <span>0.5x</span>
+            <span>1.0x</span>
+            <span>2.0x</span>
+          </div>
+          <small>Adjust text-to-speech playback speed</small>
+        </div>
+
+        <!-- AI/LLM Settings -->
+        <h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--primary); font-size: 1.1rem;">AI / LLM</h3>
+
+        <div class="form-group">
+          <label for="llmProvider">LLM Provider</label>
+          <select id="llmProvider">
+            <option value="openai">OpenAI</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="ollama">Ollama (Local)</option>
+            <option value="gemini">Google Gemini</option>
+          </select>
+          <small>AI service provider</small>
+        </div>
+
+        <div class="form-group">
+          <label for="llmModel">Model Name</label>
+          <input type="text" id="llmModel" placeholder="gpt-4o-mini">
+          <small>Model to use (e.g., gpt-4o, claude-3.5-sonnet, gemini-pro)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="apiKey">API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-...">
+          <small>Your API key (stored locally, sent to backend per session)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="apiBaseUrl">API Base URL</label>
+          <input type="text" id="apiBaseUrl" placeholder="https://openrouter.ai/api/v1">
+          <small>Custom API endpoint (optional, for OpenRouter or compatible services)</small>
+        </div>
+
         <button type="submit" class="btn save-btn">Save Settings</button>
       </form>
     </div>

@@ -673,10 +673,49 @@ const closeModal = document.getElementById('closeModal');
 const settingsForm = document.getElementById('settingsForm');
 const backendUrlInput = document.getElementById('backendUrl');
 
+// Custom voice toggle handler
+const ttsVoiceSelect = document.getElementById('ttsVoice');
+const customVoiceGroup = document.getElementById('customVoiceGroup');
+const customVoiceInput = document.getElementById('customVoiceName');
+
+ttsVoiceSelect.onchange = () => {
+  if (ttsVoiceSelect.value === 'custom') {
+    customVoiceGroup.style.display = 'block';
+  } else {
+    customVoiceGroup.style.display = 'none';
+  }
+};
+
 settingsBtn.onclick = () => {
   const settings = loadSettings();
+
+  // Connection settings
   backendUrlInput.value = settings.backendUrl || '';
   document.getElementById('wakewordToggle').checked = settings.wakewordEnabled || false;
+
+  // Speech settings
+  document.getElementById('speechLanguage').value = settings.speechLanguage || 'en';
+
+  // TTS Voice
+  const voiceValue = settings.ttsVoice || 'af_heart';
+  const voiceOptions = Array.from(ttsVoiceSelect.options).map(o => o.value);
+  if (voiceOptions.includes(voiceValue)) {
+    ttsVoiceSelect.value = voiceValue;
+    customVoiceGroup.style.display = 'none';
+  } else {
+    ttsVoiceSelect.value = 'custom';
+    customVoiceInput.value = voiceValue;
+    customVoiceGroup.style.display = 'block';
+  }
+
+  document.getElementById('speechSpeedSetting').value = settings.speechSpeed || 126;
+
+  // LLM settings
+  document.getElementById('llmProvider').value = settings.llmProvider || 'openai';
+  document.getElementById('llmModel').value = settings.llmModel || '';
+  document.getElementById('apiKey').value = settings.apiKey || '';
+  document.getElementById('apiBaseUrl').value = settings.apiBaseUrl || '';
+
   settingsModal.classList.add('show');
 };
 
@@ -692,10 +731,23 @@ settingsModal.onclick = (e) => {
 
 settingsForm.onsubmit = (e) => {
   e.preventDefault();
+
+  // Determine TTS voice (either preset or custom)
+  const selectedVoice = ttsVoiceSelect.value;
+  const ttsVoice = selectedVoice === 'custom' ? customVoiceInput.value.trim() : selectedVoice;
+
   const settings = {
     backendUrl: backendUrlInput.value.trim(),
-    wakewordEnabled: document.getElementById('wakewordToggle').checked
+    wakewordEnabled: document.getElementById('wakewordToggle').checked,
+    speechLanguage: document.getElementById('speechLanguage').value,
+    ttsVoice: ttsVoice,
+    speechSpeed: parseInt(document.getElementById('speechSpeedSetting').value),
+    llmProvider: document.getElementById('llmProvider').value,
+    llmModel: document.getElementById('llmModel').value.trim(),
+    apiKey: document.getElementById('apiKey').value.trim(),
+    apiBaseUrl: document.getElementById('apiBaseUrl').value.trim()
   };
+
   saveSettings(settings);
   settingsModal.classList.remove('show');
   statusDiv.textContent = "Settings saved. Click Start to connect.";
@@ -720,14 +772,79 @@ document.getElementById("startBtn").onclick = async () => {
     statusDiv.textContent = "Connected. Activating mic and TTS…";
     logEvent('connection', 'WebSocket connected');
 
-    // Send wakeword setting to backend
+    // Send all settings to backend
     const settings = loadSettings();
+
+    // Wakeword setting
     if (settings.wakewordEnabled !== undefined) {
       socket.send(JSON.stringify({
         type: 'set_wakeword',
         enabled: settings.wakewordEnabled
       }));
       console.log('Sent wakeword setting:', settings.wakewordEnabled);
+    }
+
+    // Speech language
+    if (settings.speechLanguage) {
+      socket.send(JSON.stringify({
+        type: 'set_language',
+        language: settings.speechLanguage
+      }));
+      console.log('Sent speech language:', settings.speechLanguage);
+    }
+
+    // TTS Voice
+    if (settings.ttsVoice) {
+      socket.send(JSON.stringify({
+        type: 'set_voice',
+        voice: settings.ttsVoice
+      }));
+      console.log('Sent TTS voice:', settings.ttsVoice);
+    }
+
+    // Speech speed
+    if (settings.speechSpeed) {
+      socket.send(JSON.stringify({
+        type: 'set_speed',
+        speed: settings.speechSpeed
+      }));
+      console.log('Sent speech speed:', settings.speechSpeed);
+    }
+
+    // LLM Provider
+    if (settings.llmProvider) {
+      socket.send(JSON.stringify({
+        type: 'set_llm_provider',
+        provider: settings.llmProvider
+      }));
+      console.log('Sent LLM provider:', settings.llmProvider);
+    }
+
+    // LLM Model
+    if (settings.llmModel) {
+      socket.send(JSON.stringify({
+        type: 'set_llm_model',
+        model: settings.llmModel
+      }));
+      console.log('Sent LLM model:', settings.llmModel);
+    }
+
+    // API Key
+    if (settings.apiKey) {
+      socket.send(JSON.stringify({
+        type: 'set_api_key',
+        apiKey: settings.apiKey
+      }));
+      console.log('Sent API key: (masked)');
+    }
+
+    // API Base URL
+    if (settings.apiBaseUrl) {
+      socket.send(JSON.stringify({
+        type: 'set_base_url',
+        baseUrl: settings.apiBaseUrl
+      }));
+      console.log('Sent API base URL:', settings.apiBaseUrl);
     }
 
     await startRawPcmCapture();
