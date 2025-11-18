@@ -487,6 +487,35 @@
       display: flex;
     }
     /* Events Panel Styles */
+    .event-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3d3d3d;
+    }
+    .filter-btn {
+      padding: 8px 16px;
+      background: #1e1e1e;
+      color: #888;
+      border: 1px solid #3d3d3d;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'Inter', Arial, sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      background: #2d2d2d;
+      color: #e0e0e0;
+      border-color: #667eea;
+    }
+    .filter-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
     .event-stream {
       flex: 1;
       overflow-y: auto;
@@ -666,6 +695,10 @@
 
       <!-- Events Panel -->
       <div id="eventsPanel" class="panel">
+        <div class="event-filter-bar">
+          <button class="filter-btn active" data-filter="all">All Events</button>
+          <button class="filter-btn" data-filter="agent">Agent Events Only</button>
+        </div>
         <div class="event-stream" id="eventStream">
           <div class="empty-state" style="color: #888;">
             <svg viewBox="0 0 24 24" fill="currentColor" style="width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3;">

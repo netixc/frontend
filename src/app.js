@@ -68,41 +68,86 @@ const createAgentModal = document.getElementById("createAgentModal");
 const closeAgentModal = document.getElementById("closeAgentModal");
 const createAgentForm = document.getElementById("createAgentForm");
 
-// Event logging
+// Event logging - matching RealtimeVoiceClient implementation
+let events = [];
+let eventFilter = 'all'; // 'all' or 'agent'
+
 function logEvent(type, data) {
-  // Remove empty state if it exists
-  const emptyState = eventStreamDiv.querySelector('.empty-state');
-  if (emptyState) {
-    emptyState.remove();
+  const event = {
+    type: type,
+    timestamp: new Date().toISOString(),
+    data: data
+  };
+
+  events.unshift(event);
+  if (events.length > 100) events.pop(); // Keep last 100 events
+  renderEvents();
+}
+
+function isAgentEvent(eventType) {
+  const agentEventTypes = [
+    'agent_created',
+    'agent_deleted',
+    'agent_command',
+    'function_call'
+  ];
+  return agentEventTypes.includes(eventType);
+}
+
+function renderEvents() {
+  // Filter events based on current filter
+  const filteredEvents = eventFilter === 'agent'
+    ? events.filter(event => isAgentEvent(event.type))
+    : events;
+
+  if (filteredEvents.length === 0) {
+    const emptyMessage = eventFilter === 'agent'
+      ? 'No agent events yet'
+      : 'No events yet';
+    const emptyDetail = eventFilter === 'agent'
+      ? 'Agent events will appear here when agents are active'
+      : 'Events will appear here when the connection is active';
+
+    eventStreamDiv.innerHTML = `
+      <div class="empty-state" style="color: #888;">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </svg>
+        <p>${emptyMessage}</p>
+        <p style="font-size: 12px; margin-top: 8px;">${emptyDetail}</p>
+      </div>
+    `;
+    return;
   }
 
-  const eventDiv = document.createElement('div');
-  eventDiv.className = `event ${type}`;
+  eventStreamDiv.innerHTML = filteredEvents.map(event => {
+    const timestamp = new Date(event.timestamp).toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      fractionalSecondDigits: 3
+    });
+    const eventClass = event.type || 'info';
+    const eventTypeLabel = (event.type || 'event').toUpperCase().replace(/_/g, ' ');
 
-  const timestamp = new Date().toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3
-  });
+    let eventData = '';
+    if (typeof event.data === 'object') {
+      eventData = JSON.stringify(event.data, null, 2);
+    } else if (event.data) {
+      eventData = event.data;
+    }
 
-  let eventTypeLabel = type.toUpperCase().replace(/_/g, ' ');
-  let eventData = '';
+    return `
+      <div class="event ${eventClass}">
+        <div class="event-type">${eventTypeLabel}</div>
+        <div class="event-timestamp">${timestamp}</div>
+        ${eventData ? `<div class="event-data">${escapeHtml(eventData)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
 
-  if (typeof data === 'object') {
-    eventData = JSON.stringify(data, null, 2);
-  } else {
-    eventData = data;
-  }
-
-  eventDiv.innerHTML = `
-    <div class="event-type">${eventTypeLabel}</div>
-    <div class="event-timestamp">${timestamp}</div>
-    ${eventData ? `<div class="event-data">${escapeHtml(eventData)}</div>` : ''}
-  `;
-
-  eventStreamDiv.appendChild(eventDiv);
+  // Scroll to bottom
   eventStreamDiv.scrollTop = eventStreamDiv.scrollHeight;
 }
 
@@ -767,6 +812,19 @@ textInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter' && !textInput.disabled) {
     sendBtn.onclick();
   }
+});
+
+// Event filter handlers
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Update active state
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update filter and re-render
+    eventFilter = btn.getAttribute('data-filter');
+    renderEvents();
+  });
 });
 
 // First render
