@@ -620,6 +620,44 @@
       margin-bottom: 16px;
       opacity: 0.3;
     }
+    /* Wakeword status indicator */
+    .wakeword-status {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-left: 12px;
+      transition: all 0.3s ease;
+    }
+    .wakeword-status.listening {
+      display: flex;
+      background: #fbbf24;
+      color: #854d0e;
+    }
+    .wakeword-status.detected {
+      display: flex;
+      background: #10b981;
+      color: #fff;
+      animation: pulse-green 1s ease-in-out;
+    }
+    @keyframes pulse-green {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+    }
+    .wakeword-status .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -640,6 +678,10 @@
           >AI</text>
         </svg>
         Real-Time Voice Chat
+        <div id="wakewordStatus" class="wakeword-status">
+          <span class="status-dot"></span>
+          <span id="wakewordStatusText">Listening for "jarvis"...</span>
+        </div>
         <span class="status" id="status"></span>
       </div>
 

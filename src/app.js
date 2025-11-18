@@ -535,6 +535,33 @@ function handleJSONMessage(msg) {
     logEvent('function_call', msg);
   }
 
+  // Handle wakeword detection events
+  if (type === "wakeword_listening") {
+    const wakewordStatus = document.getElementById("wakewordStatus");
+    const wakewordStatusText = document.getElementById("wakewordStatusText");
+    wakewordStatus.className = "wakeword-status listening";
+    wakewordStatusText.textContent = 'Listening for "jarvis"...';
+    return;
+  }
+  if (type === "wakeword_detected") {
+    const wakewordStatus = document.getElementById("wakewordStatus");
+    const wakewordStatusText = document.getElementById("wakewordStatusText");
+    wakewordStatus.className = "wakeword-status detected";
+    wakewordStatusText.textContent = "Wakeword detected! You can speak now...";
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      wakewordStatus.className = "wakeword-status";
+    }, 3000);
+    return;
+  }
+  if (type === "wakeword_timeout") {
+    const wakewordStatus = document.getElementById("wakewordStatus");
+    const wakewordStatusText = document.getElementById("wakewordStatusText");
+    wakewordStatus.className = "wakeword-status listening";
+    wakewordStatusText.textContent = 'Listening for "jarvis"...';
+    return;
+  }
+
   if (type === "partial_user_request") {
     typingUser = content?.trim() ? escapeHtml(content) : "";
     renderMessages();
