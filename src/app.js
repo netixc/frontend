@@ -69,8 +69,22 @@ const closeAgentModal = document.getElementById("closeAgentModal");
 const createAgentForm = document.getElementById("createAgentForm");
 
 // Event logging - matching RealtimeVoiceClient implementation
+// Load events from localStorage on page load
 let events = [];
+try {
+  const savedEvents = localStorage.getItem('agent_events');
+  if (savedEvents) {
+    events = JSON.parse(savedEvents);
+    console.log(`Loaded ${events.length} events from localStorage`);
+  }
+} catch (e) {
+  console.error('Failed to load events from localStorage:', e);
+}
+
 let eventFilter = 'agent'; // 'all' or 'agent' - default to agent events only
+
+// Render events immediately after loading
+setTimeout(() => renderEvents(), 100);
 
 function logEvent(type, data) {
   const event = {
@@ -81,6 +95,14 @@ function logEvent(type, data) {
 
   events.unshift(event);
   if (events.length > 100) events.pop(); // Keep last 100 events
+
+  // Save to localStorage
+  try {
+    localStorage.setItem('agent_events', JSON.stringify(events));
+  } catch (e) {
+    console.error('Failed to save events to localStorage:', e);
+  }
+
   renderEvents();
 }
 
@@ -629,7 +651,14 @@ function escapeHtml(str) {
 document.getElementById("clearBtn").onclick = () => {
   chatHistory = [];
   typingUser = typingAssistant = "";
+  events = []; // Also clear events
+  try {
+    localStorage.removeItem('agent_events'); // Clear persisted events
+  } catch (e) {
+    console.error('Failed to clear events from localStorage:', e);
+  }
   renderMessages();
+  renderEvents(); // Re-render events panel
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ type: 'clear_history' }));
   }
