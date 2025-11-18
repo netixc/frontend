@@ -347,19 +347,45 @@
       flex-wrap: wrap;
     }
     .toggle-mic-btn {
-      background-color: #10b981;
+      background-color: transparent;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
       min-width: 110px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
+      transition: all 0.2s ease;
     }
+    .toggle-mic-btn:hover:not(:disabled) {
+      background-color: #f3f4f6;
+      border-color: #d1d5db;
+    }
+    .toggle-mic-btn:active:not(:disabled) {
+      background-color: #e5e7eb;
+    }
+    /* When mic is ON (not muted) - active state */
+    .toggle-mic-btn:not(.muted) {
+      background-color: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+    .toggle-mic-btn:not(.muted):hover {
+      background-color: #059669;
+      border-color: #059669;
+    }
+    /* When mic is OFF (muted) - inactive state */
     .toggle-mic-btn.muted {
-      background-color: #ef4444;
+      background-color: transparent;
+      border-color: #e5e7eb;
+      color: #6b7280;
     }
     .toggle-mic-btn:disabled {
-      background-color: #9ca3af;
+      background-color: #f9fafb;
+      border-color: #e5e7eb;
+      color: #9ca3af;
       cursor: not-allowed;
+      opacity: 0.5;
     }
     /* Agent Panel Styles */
     .agent-list {
@@ -638,7 +664,7 @@
             </svg>
           </button>
 
-          <button id="toggleMicBtn" title="Toggle microphone" class="btn toggle-mic-btn" disabled>
+          <button id="toggleMicBtn" title="Toggle microphone" class="btn toggle-mic-btn">
             <svg id="micIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="currentColor"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
