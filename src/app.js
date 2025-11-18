@@ -499,8 +499,7 @@ function cleanupAudio() {
     mediaStream.getAudioTracks().forEach(track => track.stop());
     mediaStream = null;
   }
-  // Disable controls when stopping
-  document.getElementById("toggleMicBtn").disabled = true;
+  // Disable controls when stopping (keep mic toggle enabled)
   document.getElementById("textInput").disabled = true;
   document.getElementById("sendBtn").disabled = true;
 }
@@ -694,7 +693,6 @@ document.getElementById("startBtn").onclick = async () => {
     await startRawPcmCapture();
     await setupTTSPlayback();
     speedSlider.disabled = false;
-    toggleMicBtn.disabled = false;
     textInput.disabled = false;
     sendBtn.disabled = false;
   };
