@@ -16,7 +16,35 @@
 const statusDiv = document.getElementById("status");
 const messagesDiv = document.getElementById("messages");
 const speedSlider = document.getElementById("speedSlider");
+const eventStreamDiv = document.getElementById("eventStream");
 speedSlider.disabled = true;  // start disabled
+
+// Tab switching
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const targetTab = tab.getAttribute('data-tab');
+
+    // Update tabs
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // Update panels
+    panels.forEach(panel => {
+      panel.classList.remove('active');
+      if (panel.id === `${targetTab}Panel`) {
+        panel.classList.add('active');
+      }
+    });
+
+    // Load agents when switching to agents tab
+    if (targetTab === 'agents') {
+      loadAgents();
+    }
+  });
+});
 
 let socket = null;
 let audioContext = null;
@@ -31,6 +59,242 @@ let micEnabled = true;  // Microphone mute state
 let chatHistory = [];
 let typingUser = "";
 let typingAssistant = "";
+
+// Agent management
+let agents = [];
+const agentList = document.getElementById("agentList");
+const createAgentBtn = document.getElementById("createAgentBtn");
+const createAgentModal = document.getElementById("createAgentModal");
+const closeAgentModal = document.getElementById("closeAgentModal");
+const createAgentForm = document.getElementById("createAgentForm");
+
+// Event logging
+function logEvent(type, data) {
+  // Remove empty state if it exists
+  const emptyState = eventStreamDiv.querySelector('.empty-state');
+  if (emptyState) {
+    emptyState.remove();
+  }
+
+  const eventDiv = document.createElement('div');
+  eventDiv.className = `event ${type}`;
+
+  const timestamp = new Date().toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  });
+
+  let eventTypeLabel = type.toUpperCase().replace(/_/g, ' ');
+  let eventData = '';
+
+  if (typeof data === 'object') {
+    eventData = JSON.stringify(data, null, 2);
+  } else {
+    eventData = data;
+  }
+
+  eventDiv.innerHTML = `
+    <div class="event-type">${eventTypeLabel}</div>
+    <div class="event-timestamp">${timestamp}</div>
+    ${eventData ? `<div class="event-data">${escapeHtml(eventData)}</div>` : ''}
+  `;
+
+  eventStreamDiv.appendChild(eventDiv);
+  eventStreamDiv.scrollTop = eventStreamDiv.scrollHeight;
+}
+
+// Agent Management Functions
+async function loadAgents() {
+  try {
+    const settings = loadSettings();
+    const wsProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const backendUrl = settings.backendUrl;
+
+    const response = await fetch(`${wsProto}//${backendUrl}/agents`);
+    const result = await response.json();
+
+    if (result && result.agents) {
+      agents = result.agents;
+      renderAgents();
+    }
+  } catch (e) {
+    console.error('Failed to load agents:', e);
+    logEvent('error', `Failed to load agents: ${e.message}`);
+  }
+}
+
+function renderAgents() {
+  if (agents.length === 0) {
+    agentList.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <p>No agents created yet</p>
+        <p style="font-size: 14px; margin-top: 8px;">Create an agent to get started</p>
+      </div>
+    `;
+    return;
+  }
+
+  agentList.innerHTML = agents.map(agent => `
+    <div class="agent-card">
+      <div class="agent-header">
+        <span class="agent-name">${escapeHtml(agent.name)}</span>
+        <span class="agent-status ${agent.status || 'active'}">${agent.status || 'active'}</span>
+      </div>
+      <div class="agent-meta">
+        <strong>Type:</strong> ${agent.tool} - ${agent.type}<br>
+        <strong>Created:</strong> ${new Date(agent.created_at).toLocaleString()}<br>
+        ${agent.expires_at ? `<strong>Expires:</strong> ${new Date(agent.expires_at).toLocaleString()}` : ''}
+      </div>
+      <div class="agent-actions">
+        <button class="agent-btn command" onclick="commandAgent('${agent.name}')">📝 Command</button>
+        <button class="agent-btn delete" onclick="deleteAgent('${agent.name}')">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function commandAgent(agentName) {
+  const prompt = window.prompt(`Enter command for ${agentName}:`);
+  if (!prompt) return;
+
+  try {
+    const settings = loadSettings();
+    const wsProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const backendUrl = settings.backendUrl;
+
+    const response = await fetch(`${wsProto}//${backendUrl}/agents/${agentName}/command`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const result = await response.json();
+
+    if (result.ok) {
+      alert(`Command sent to ${agentName}!\nOperator file: ${result.operator_file || 'N/A'}`);
+      logEvent('agent_command', {
+        agent_name: agentName,
+        prompt: prompt.substring(0, 100),
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      alert(`Error: ${result.error}`);
+      logEvent('error', `Failed to command agent: ${result.error}`);
+    }
+  } catch (e) {
+    console.error('Failed to command agent:', e);
+    alert('Failed to send command');
+    logEvent('error', `Failed to command agent: ${e.message}`);
+  }
+}
+
+async function deleteAgent(agentName) {
+  if (!confirm(`Delete agent "${agentName}"?`)) return;
+
+  try {
+    const settings = loadSettings();
+    const wsProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const backendUrl = settings.backendUrl;
+
+    const response = await fetch(`${wsProto}//${backendUrl}/agents/${agentName}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (result.ok) {
+      loadAgents();
+      logEvent('agent_deleted', {
+        agent_name: agentName,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      alert(`Error: ${result.error}`);
+      logEvent('error', `Failed to delete agent: ${result.error}`);
+    }
+  } catch (e) {
+    console.error('Failed to delete agent:', e);
+    alert('Failed to delete agent');
+    logEvent('error', `Failed to delete agent: ${e.message}`);
+  }
+}
+
+// Make functions globally accessible for onclick handlers
+window.commandAgent = commandAgent;
+window.deleteAgent = deleteAgent;
+
+// Agent Modal Handlers
+createAgentBtn.onclick = () => {
+  createAgentModal.classList.add('show');
+};
+
+closeAgentModal.onclick = () => {
+  createAgentModal.classList.remove('show');
+};
+
+createAgentModal.onclick = (e) => {
+  if (e.target === createAgentModal) {
+    createAgentModal.classList.remove('show');
+  }
+};
+
+createAgentForm.onsubmit = async (e) => {
+  e.preventDefault();
+
+  const tool = document.getElementById('agentTool').value;
+  const agentType = document.getElementById('agentType').value;
+  const agentName = document.getElementById('agentName').value;
+  const expiryHours = parseInt(document.getElementById('agentExpiry').value);
+
+  try {
+    const settings = loadSettings();
+    const wsProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const backendUrl = settings.backendUrl;
+
+    const response = await fetch(`${wsProto}//${backendUrl}/agents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tool,
+        type: agentType,
+        name: agentName,
+        expiry_hours: expiryHours
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.ok) {
+      createAgentModal.classList.remove('show');
+      createAgentForm.reset();
+      loadAgents();
+      logEvent('agent_created', {
+        agent_name: agentName,
+        tool: tool,
+        agent_type: agentType,
+        timestamp: new Date().toISOString()
+      });
+      alert(`Agent "${agentName}" created successfully!`);
+    } else {
+      alert(`Error: ${result.error}`);
+      logEvent('error', `Failed to create agent: ${result.error}`);
+    }
+  } catch (e) {
+    console.error('Failed to create agent:', e);
+    alert('Failed to create agent');
+    logEvent('error', `Failed to create agent: ${e.message}`);
+  }
+};
 
 // --- batching + fixed 8‑byte header setup ---
 const BATCH_SAMPLES = 2048;
@@ -219,7 +483,14 @@ function renderMessages() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-function handleJSONMessage({ type, content }) {
+function handleJSONMessage(msg) {
+  const { type, content } = msg;
+
+  // Log function calls specifically
+  if (type && type.includes('function_call')) {
+    logEvent('function_call', msg);
+  }
+
   if (type === "partial_user_request") {
     typingUser = content?.trim() ? escapeHtml(content) : "";
     renderMessages();
@@ -374,6 +645,7 @@ document.getElementById("startBtn").onclick = async () => {
 
   socket.onopen = async () => {
     statusDiv.textContent = "Connected. Activating mic and TTS…";
+    logEvent('connection', 'WebSocket connected');
     await startRawPcmCapture();
     await setupTTSPlayback();
     speedSlider.disabled = false;
@@ -386,15 +658,23 @@ document.getElementById("startBtn").onclick = async () => {
     if (typeof evt.data === "string") {
       try {
         const msg = JSON.parse(evt.data);
+
+        // Log message events (excluding tts_chunk to avoid spam)
+        if (msg.type && msg.type !== 'tts_chunk') {
+          logEvent('message', { type: msg.type, content: msg.content ? msg.content.substring(0, 100) + (msg.content.length > 100 ? '...' : '') : undefined });
+        }
+
         handleJSONMessage(msg);
       } catch (e) {
         console.error("Error parsing message:", e);
+        logEvent('error', `Error parsing message: ${e.message}`);
       }
     }
   };
 
   socket.onclose = () => {
     statusDiv.textContent = "Connection closed.";
+    logEvent('connection', 'WebSocket disconnected');
     flushRemainder();
     cleanupAudio();
     speedSlider.disabled = true;
@@ -402,9 +682,10 @@ document.getElementById("startBtn").onclick = async () => {
 
   socket.onerror = (err) => {
     statusDiv.textContent = "Connection error.";
+    logEvent('error', `WebSocket error: ${err.message || 'Unknown error'}`);
     cleanupAudio();
     console.error(err);
-    speedSlider.disabled = true; 
+    speedSlider.disabled = true;
   };
 };
 
@@ -471,11 +752,13 @@ sendBtn.onclick = async () => {
   // which will add it via handleJSONMessage to avoid duplicates
 
   // Send text message to backend
-  socket.send(JSON.stringify({
+  const message = {
     type: "user_text",
     text: text
-  }));
+  };
+  socket.send(JSON.stringify(message));
 
+  logEvent('message', { type: 'user_text', text: text.substring(0, 100) + (text.length > 100 ? '...' : '') });
   console.log("Sent text message:", text);
 };
 

@@ -361,13 +361,201 @@
       background-color: #9ca3af;
       cursor: not-allowed;
     }
+    /* Agent Panel Styles */
+    .agent-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--bg);
+    }
+    .agent-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .agent-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .agent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .agent-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: #2c3e50;
+    }
+    .agent-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .agent-status.active {
+      background: #d4edda;
+      color: #155724;
+    }
+    .agent-status.idle {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .agent-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .agent-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .agent-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .agent-btn:hover {
+      opacity: 0.8;
+    }
+    .agent-btn.command {
+      background: #667eea;
+      color: white;
+    }
+    .agent-btn.delete {
+      background: #ef4444;
+      color: white;
+    }
+    .create-agent-btn {
+      background: #10b981;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      margin: 16px;
+    }
+    .create-agent-btn:hover {
+      opacity: 0.9;
+    }
+    /* Tabs Navigation */
+    .tabs {
+      display: flex;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e1e5ef;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab:hover {
+      background: #f0f1f3;
+      color: #2c3e50;
+    }
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: #fff;
+    }
+    /* Panels */
+    .panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel.active {
+      display: flex;
+    }
+    /* Events Panel Styles */
+    .event-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #1e1e1e;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .event {
+      background: #2d2d2d;
+      border-left: 3px solid #667eea;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      color: #e0e0e0;
+    }
+    .event-type {
+      color: #4ade80;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .event-timestamp {
+      color: #888;
+      font-size: 11px;
+    }
+    .event-data {
+      color: #a0a0a0;
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+    .event.connection {
+      border-left-color: #4ade80;
+    }
+    .event.function_call {
+      border-left-color: #667eea;
+    }
+    .event.agent_command {
+      border-left-color: #667eea;
+    }
+    .event.agent_created {
+      border-left-color: #10b981;
+    }
+    .event.agent_deleted {
+      border-left-color: #ef4444;
+    }
+    .event.error {
+      border-left-color: #ef4444;
+    }
+    .event.message {
+      border-left-color: #fbbf24;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #888;
+    }
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
   </style>
 </head>
 <body>
   <div id="app">
     <div class="chat-container">
       <div class="header">
-        <!-- Centered “AI” text within the circle -->
+        <!-- Centered "AI" text within the circle -->
         <svg height="24" width="24" viewBox="0 0 22 22" fill="#fff" style="margin-right:8px">
           <circle cx="11" cy="11" r="12" fill="#222F3D" />
           <text
@@ -383,8 +571,18 @@
         Real-Time Voice Chat
         <span class="status" id="status"></span>
       </div>
-      <div class="messages" id="messages"></div>
-      <div class="input-bar">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="chat">💬 Chat</button>
+        <button class="tab" data-tab="agents">🤖 Agents</button>
+        <button class="tab" data-tab="events">📊 Events</button>
+      </div>
+
+      <!-- Chat Panel -->
+      <div id="chatPanel" class="panel active">
+        <div class="messages" id="messages"></div>
+        <div class="input-bar">
         <!-- Row 1: Text Input -->
         <div class="input-row">
           <input type="text" id="textInput" class="text-input" placeholder="Type a message..." disabled>
@@ -449,7 +647,36 @@
           </button>
         </div>
 
+        </div>
       </div>
+
+      <!-- Agents Panel -->
+      <div id="agentsPanel" class="panel">
+        <div class="agent-list" id="agentList">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <p>No agents created yet</p>
+            <p style="font-size: 14px; margin-top: 8px;">Create an agent to get started</p>
+          </div>
+        </div>
+        <button class="create-agent-btn" id="createAgentBtn">+ Create New Agent</button>
+      </div>
+
+      <!-- Events Panel -->
+      <div id="eventsPanel" class="panel">
+        <div class="event-stream" id="eventStream">
+          <div class="empty-state" style="color: #888;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3;">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+            </svg>
+            <p>No events yet</p>
+            <p style="font-size: 12px; margin-top: 8px;">Events will appear here when the connection is active</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -467,6 +694,49 @@
           <small>Enter the backend server address (without protocol, e.g., localhost:8000 or 192.168.1.100:8000)</small>
         </div>
         <button type="submit" class="btn save-btn">Save Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Agent Modal -->
+  <div id="createAgentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Agent</h2>
+        <button class="close-btn" id="closeAgentModal">&times;</button>
+      </div>
+      <form id="createAgentForm">
+        <div class="form-group">
+          <label for="agentTool">Agent Tool</label>
+          <select id="agentTool" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+            <option value="">Select a tool...</option>
+            <option value="claude_code">Claude Code</option>
+            <option value="gemini">Gemini</option>
+            <option value="agent_zero">Agent Zero</option>
+          </select>
+          <small>Select the agent tool to use</small>
+        </div>
+        <div class="form-group">
+          <label for="agentType">Agent Type</label>
+          <select id="agentType" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+            <option value="">Select a type...</option>
+            <option value="agentic_coding">Agentic Coding</option>
+            <option value="agentic_browsing">Agentic Browsing</option>
+            <option value="agentic_general">Agentic General</option>
+          </select>
+          <small>Select the agent type</small>
+        </div>
+        <div class="form-group">
+          <label for="agentName">Agent Name</label>
+          <input type="text" id="agentName" placeholder="My Agent" required>
+          <small>Enter a unique name for the agent</small>
+        </div>
+        <div class="form-group">
+          <label for="agentExpiry">Expiry Hours</label>
+          <input type="number" id="agentExpiry" value="24" min="1" max="168" required>
+          <small>How many hours until the agent expires (1-168 hours)</small>
+        </div>
+        <button type="submit" class="btn save-btn">Create Agent</button>
       </form>
     </div>
   </div>
