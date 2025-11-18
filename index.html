@@ -243,17 +243,26 @@
     }
     .modal-content {
       background-color: #fff;
-      padding: 24px;
+      padding: 0;
       border-radius: 12px;
-      max-width: 500px;
+      max-width: 600px;
       width: 90%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
     }
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #eee;
     }
     .modal-header h2 {
       margin: 0;
@@ -275,6 +284,38 @@
     }
     .close-btn:hover {
       color: #000;
+    }
+    .settings-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 24px 0 24px;
+      border-bottom: 2px solid #eee;
+    }
+    .settings-tab {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #666;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+    }
+    .settings-tab:hover {
+      color: var(--primary);
+      background: rgba(79, 70, 229, 0.05);
+    }
+    .settings-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+    .settings-tab-panel {
+      display: none;
+    }
+    .settings-tab-panel.active {
+      display: block;
     }
     .form-group {
       margin-bottom: 16px;
@@ -804,24 +845,36 @@
         <h2>Settings</h2>
         <button class="close-btn" id="closeModal">&times;</button>
       </div>
-      <form id="settingsForm">
-        <div class="form-group">
-          <label for="backendUrl">Backend URL</label>
-          <input type="text" id="backendUrl" placeholder="localhost:8000" required>
-          <small>Enter the backend server address (without protocol, e.g., localhost:8000 or 192.168.1.100:8000)</small>
-        </div>
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="wakewordToggle" name="wakewordToggle">
-            <div class="checkbox-text">
-              <strong>Enable Wakeword Detection</strong>
-              <small>When enabled, the system will listen for the wakeword "jarvis" before processing voice input</small>
-            </div>
-          </label>
-        </div>
 
-        <!-- Speech Settings -->
-        <h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--primary); font-size: 1.1rem;">Speech & Voice</h3>
+      <!-- Settings Tabs -->
+      <div class="settings-tabs">
+        <button type="button" class="settings-tab active" data-settings-tab="general">General</button>
+        <button type="button" class="settings-tab" data-settings-tab="speech">Speech & Voice</button>
+        <button type="button" class="settings-tab" data-settings-tab="llm">AI / LLM</button>
+      </div>
+
+      <form id="settingsForm">
+        <div class="modal-body">
+          <!-- General Tab -->
+          <div class="settings-tab-panel active" id="generalPanel">
+            <div class="form-group">
+              <label for="backendUrl">Backend URL</label>
+              <input type="text" id="backendUrl" placeholder="localhost:8000" required>
+              <small>Enter the backend server address (without protocol, e.g., localhost:8000 or 192.168.1.100:8000)</small>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="wakewordToggle" name="wakewordToggle">
+                <div class="checkbox-text">
+                  <strong>Enable Wakeword Detection</strong>
+                  <small>When enabled, the system will listen for the wakeword "jarvis" before processing voice input</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Speech & Voice Tab -->
+          <div class="settings-tab-panel" id="speechPanel">
 
         <div class="form-group">
           <label for="speechLanguage">Speech Language</label>
@@ -876,10 +929,11 @@
             <span>2.0x</span>
           </div>
           <small>Adjust text-to-speech playback speed</small>
+          </div>
         </div>
 
-        <!-- AI/LLM Settings -->
-        <h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--primary); font-size: 1.1rem;">AI / LLM</h3>
+          <!-- AI / LLM Tab -->
+          <div class="settings-tab-panel" id="llmPanel">
 
         <div class="form-group">
           <label for="llmProvider">LLM Provider</label>
@@ -908,9 +962,13 @@
           <label for="apiBaseUrl">API Base URL</label>
           <input type="text" id="apiBaseUrl" placeholder="https://openrouter.ai/api/v1">
           <small>Custom API endpoint (optional, for OpenRouter or compatible services)</small>
+          </div>
         </div>
 
-        <button type="submit" class="btn save-btn">Save Settings</button>
+        </div>
+        <div style="padding: 16px 24px; border-top: 1px solid #eee;">
+          <button type="submit" class="btn save-btn">Save Settings</button>
+        </div>
       </form>
     </div>
   </div>

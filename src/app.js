@@ -753,6 +753,28 @@ settingsForm.onsubmit = (e) => {
   statusDiv.textContent = "Settings saved. Click Start to connect.";
 };
 
+// Settings tabs handler
+const settingsTabs = document.querySelectorAll('.settings-tab');
+const settingsTabPanels = document.querySelectorAll('.settings-tab-panel');
+
+settingsTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const targetTab = tab.getAttribute('data-settings-tab');
+
+    // Update tabs
+    settingsTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // Update panels
+    settingsTabPanels.forEach(panel => {
+      panel.classList.remove('active');
+      if (panel.id === `${targetTab}Panel`) {
+        panel.classList.add('active');
+      }
+    });
+  });
+});
+
 document.getElementById("startBtn").onclick = async () => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     statusDiv.textContent = "Already recording.";
