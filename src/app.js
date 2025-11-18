@@ -649,16 +649,37 @@ speedSlider.addEventListener("input", (e) => {
 // Settings management
 function loadSettings() {
   const saved = localStorage.getItem('voiceChatSettings');
+
+  // Default settings
+  const config = window.APP_CONFIG || { backendUrl: 'localhost:8000', autoProtocol: true };
+  const defaults = {
+    backendUrl: config.backendUrl,
+    wakewordEnabled: false,
+    speechLanguage: 'en',
+    ttsVoice: 'af_heart',
+    speechSpeed: 126,
+    llmProvider: 'openai',
+    llmModel: 'gpt-4o-mini',
+    apiKey: '',
+    apiBaseUrl: 'https://api.openai.com/v1',
+    geminiApiKey: '',
+    agentZeroApiUrl: 'http://192.168.50.40:50080',
+    agentZeroApiKey: '',
+    logLevel: 'INFO',
+    maxAudioQueueSize: 50
+  };
+
   if (saved) {
     try {
-      return JSON.parse(saved);
+      // Merge saved settings with defaults (saved settings take precedence)
+      return { ...defaults, ...JSON.parse(saved) };
     } catch (e) {
       console.error('Failed to parse settings:', e);
+      return defaults;
     }
   }
-  // Default fallback to config.js
-  const config = window.APP_CONFIG || { backendUrl: 'localhost:8000', autoProtocol: true };
-  return { backendUrl: config.backendUrl };
+
+  return defaults;
 }
 
 function saveSettings(settings) {
@@ -715,6 +736,7 @@ settingsBtn.onclick = () => {
   document.getElementById('llmModel').value = settings.llmModel || '';
   document.getElementById('apiKey').value = settings.apiKey || '';
   document.getElementById('apiBaseUrl').value = settings.apiBaseUrl || '';
+  document.getElementById('geminiApiKey').value = settings.geminiApiKey || '';
 
   // Application settings - Agent Zero
   document.getElementById('agentZeroApiUrl').value = settings.agentZeroApiUrl || '';
@@ -754,6 +776,7 @@ settingsForm.onsubmit = (e) => {
     llmModel: document.getElementById('llmModel').value.trim(),
     apiKey: document.getElementById('apiKey').value.trim(),
     apiBaseUrl: document.getElementById('apiBaseUrl').value.trim(),
+    geminiApiKey: document.getElementById('geminiApiKey').value.trim(),
     agentZeroApiUrl: document.getElementById('agentZeroApiUrl').value.trim(),
     agentZeroApiKey: document.getElementById('agentZeroApiKey').value.trim(),
     logLevel: document.getElementById('logLevel').value,
@@ -879,6 +902,15 @@ document.getElementById("startBtn").onclick = async () => {
         baseUrl: settings.apiBaseUrl
       }));
       console.log('Sent API base URL:', settings.apiBaseUrl);
+    }
+
+    // Gemini API Key
+    if (settings.geminiApiKey) {
+      socket.send(JSON.stringify({
+        type: 'set_gemini_api_key',
+        apiKey: settings.geminiApiKey
+      }));
+      console.log('Sent Gemini API key: (masked)');
     }
 
     // Agent Zero API URL
