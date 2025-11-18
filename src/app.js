@@ -675,8 +675,13 @@ speedSlider.addEventListener("input", (e) => {
   console.log("Speed setting changed to:", speedValue);
 });
 
-// Settings management
+// Import security functions
+import { loadSecureSettings, saveSecureSettings, decryptValue } from './security.js';
+
+// Settings management with encryption
 function loadSettings() {
+  // Synchronous version for backward compatibility
+  // Returns settings with encrypted API keys (will be decrypted when needed)
   const saved = localStorage.getItem('voiceChatSettings');
 
   // Default settings
@@ -711,9 +716,10 @@ function loadSettings() {
   return defaults;
 }
 
-function saveSettings(settings) {
-  localStorage.setItem('voiceChatSettings', JSON.stringify(settings));
-  console.log('Settings saved:', settings);
+async function saveSettings(settings) {
+  // Use secure save with encryption
+  await saveSecureSettings(settings);
+  console.log('Settings saved securely');
 }
 
 // Settings modal handlers
@@ -736,8 +742,8 @@ ttsVoiceSelect.onchange = () => {
   }
 };
 
-settingsBtn.onclick = () => {
-  const settings = loadSettings();
+settingsBtn.onclick = async () => {
+  const settings = await loadSecureSettings();
 
   // Connection settings
   backendUrlInput.value = settings.backendUrl || '';
@@ -788,7 +794,7 @@ settingsModal.onclick = (e) => {
   }
 };
 
-settingsForm.onsubmit = (e) => {
+settingsForm.onsubmit = async (e) => {
   e.preventDefault();
 
   // Determine TTS voice (either preset or custom)
@@ -812,9 +818,9 @@ settingsForm.onsubmit = (e) => {
     maxAudioQueueSize: parseInt(document.getElementById('maxAudioQueueSize').value) || 50
   };
 
-  saveSettings(settings);
+  await saveSettings(settings);
   settingsModal.classList.remove('show');
-  statusDiv.textContent = "Settings saved. Click Start to connect.";
+  statusDiv.textContent = "Settings saved securely. Click Start to connect.";
 };
 
 // Settings tabs handler
