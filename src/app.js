@@ -870,11 +870,16 @@ document.getElementById("startBtn").onclick = async () => {
 
     // LLM Provider
     if (settings.llmProvider) {
+      // Map OpenRouter and Gemini to openai backend (they use OpenAI-compatible API)
+      let backendProvider = settings.llmProvider;
+      if (settings.llmProvider === 'openrouter' || settings.llmProvider === 'gemini') {
+        backendProvider = 'openai';
+      }
       socket.send(JSON.stringify({
         type: 'set_llm_provider',
-        provider: settings.llmProvider
+        provider: backendProvider
       }));
-      console.log('Sent LLM provider:', settings.llmProvider);
+      console.log('Sent LLM provider:', settings.llmProvider, '(backend:', backendProvider + ')');
     }
 
     // LLM Model
@@ -897,11 +902,17 @@ document.getElementById("startBtn").onclick = async () => {
 
     // API Base URL
     if (settings.apiBaseUrl) {
+      // Ensure URL has protocol
+      let baseUrl = settings.apiBaseUrl.trim();
+      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        baseUrl = 'https://' + baseUrl;
+        console.log('Added https:// protocol to base URL');
+      }
       socket.send(JSON.stringify({
         type: 'set_base_url',
-        baseUrl: settings.apiBaseUrl
+        baseUrl: baseUrl
       }));
-      console.log('Sent API base URL:', settings.apiBaseUrl);
+      console.log('Sent API base URL:', baseUrl);
     }
 
     // Gemini API Key
