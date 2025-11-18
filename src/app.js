@@ -467,9 +467,8 @@ sendBtn.onclick = async () => {
   // Clear input
   textInput.value = "";
 
-  // Add to chat history and display
-  chatHistory.push({ role: "user", content: text });
-  renderMessages();
+  // Don't add to chat history here - backend will send final_user_request
+  // which will add it via handleJSONMessage to avoid duplicates
 
   // Send text message to backend
   socket.send(JSON.stringify({
