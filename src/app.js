@@ -716,6 +716,14 @@ settingsBtn.onclick = () => {
   document.getElementById('apiKey').value = settings.apiKey || '';
   document.getElementById('apiBaseUrl').value = settings.apiBaseUrl || '';
 
+  // Application settings - Agent Zero
+  document.getElementById('agentZeroApiUrl').value = settings.agentZeroApiUrl || '';
+  document.getElementById('agentZeroApiKey').value = settings.agentZeroApiKey || '';
+
+  // Application settings - App config
+  document.getElementById('logLevel').value = settings.logLevel || 'INFO';
+  document.getElementById('maxAudioQueueSize').value = settings.maxAudioQueueSize || 50;
+
   settingsModal.classList.add('show');
 };
 
@@ -745,7 +753,11 @@ settingsForm.onsubmit = (e) => {
     llmProvider: document.getElementById('llmProvider').value,
     llmModel: document.getElementById('llmModel').value.trim(),
     apiKey: document.getElementById('apiKey').value.trim(),
-    apiBaseUrl: document.getElementById('apiBaseUrl').value.trim()
+    apiBaseUrl: document.getElementById('apiBaseUrl').value.trim(),
+    agentZeroApiUrl: document.getElementById('agentZeroApiUrl').value.trim(),
+    agentZeroApiKey: document.getElementById('agentZeroApiKey').value.trim(),
+    logLevel: document.getElementById('logLevel').value,
+    maxAudioQueueSize: parseInt(document.getElementById('maxAudioQueueSize').value) || 50
   };
 
   saveSettings(settings);
@@ -867,6 +879,42 @@ document.getElementById("startBtn").onclick = async () => {
         baseUrl: settings.apiBaseUrl
       }));
       console.log('Sent API base URL:', settings.apiBaseUrl);
+    }
+
+    // Agent Zero API URL
+    if (settings.agentZeroApiUrl) {
+      socket.send(JSON.stringify({
+        type: 'set_agent_zero_api_url',
+        apiUrl: settings.agentZeroApiUrl
+      }));
+      console.log('Sent Agent Zero API URL:', settings.agentZeroApiUrl);
+    }
+
+    // Agent Zero API Key
+    if (settings.agentZeroApiKey) {
+      socket.send(JSON.stringify({
+        type: 'set_agent_zero_api_key',
+        apiKey: settings.agentZeroApiKey
+      }));
+      console.log('Sent Agent Zero API key: (masked)');
+    }
+
+    // Log Level
+    if (settings.logLevel) {
+      socket.send(JSON.stringify({
+        type: 'set_log_level',
+        logLevel: settings.logLevel
+      }));
+      console.log('Sent log level:', settings.logLevel);
+    }
+
+    // Max Audio Queue Size
+    if (settings.maxAudioQueueSize) {
+      socket.send(JSON.stringify({
+        type: 'set_max_audio_queue_size',
+        maxSize: settings.maxAudioQueueSize
+      }));
+      console.log('Sent max audio queue size:', settings.maxAudioQueueSize);
     }
 
     await startRawPcmCapture();

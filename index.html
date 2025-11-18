@@ -851,6 +851,7 @@
         <button type="button" class="settings-tab active" data-settings-tab="general">General</button>
         <button type="button" class="settings-tab" data-settings-tab="speech">Speech & Voice</button>
         <button type="button" class="settings-tab" data-settings-tab="llm">AI / LLM</button>
+        <button type="button" class="settings-tab" data-settings-tab="application">Application</button>
       </div>
 
       <form id="settingsForm">
@@ -962,6 +963,43 @@
           <label for="apiBaseUrl">API Base URL</label>
           <input type="text" id="apiBaseUrl" placeholder="https://openrouter.ai/api/v1">
           <small>Custom API endpoint (optional, for OpenRouter or compatible services)</small>
+          </div>
+        </div>
+
+          <!-- Application Tab -->
+          <div class="settings-tab-panel" id="applicationPanel">
+
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 1.1rem; color: #333;">Agent Zero Configuration</h3>
+
+        <div class="form-group">
+          <label for="agentZeroApiUrl">Agent Zero API URL</label>
+          <input type="text" id="agentZeroApiUrl" placeholder="http://192.168.50.40:50080">
+          <small>Agent Zero API endpoint address</small>
+        </div>
+
+        <div class="form-group">
+          <label for="agentZeroApiKey">Agent Zero API Key</label>
+          <input type="password" id="agentZeroApiKey" placeholder="Enter API key">
+          <small>Authentication key for Agent Zero API</small>
+        </div>
+
+        <h3 style="margin-top: 24px; margin-bottom: 16px; font-size: 1.1rem; color: #333;">Application Settings</h3>
+
+        <div class="form-group">
+          <label for="logLevel">Log Level</label>
+          <select id="logLevel">
+            <option value="DEBUG">DEBUG</option>
+            <option value="INFO">INFO</option>
+            <option value="WARNING">WARNING</option>
+            <option value="ERROR">ERROR</option>
+          </select>
+          <small>Logging verbosity level for debugging</small>
+        </div>
+
+        <div class="form-group">
+          <label for="maxAudioQueueSize">Max Audio Queue Size</label>
+          <input type="number" id="maxAudioQueueSize" placeholder="50" min="10" max="500" step="10">
+          <small>Maximum size of the audio processing queue (default: 50)</small>
           </div>
         </div>
 
