@@ -256,6 +256,13 @@
       padding: 24px;
       overflow-y: auto;
       flex: 1;
+      min-height: 0;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #eee;
+      background-color: #fff;
+      border-radius: 0 0 12px 12px;
     }
     .modal-header {
       display: flex;
@@ -368,7 +375,6 @@
       background-color: #28a745;
       width: 100%;
       padding: 12px;
-      margin-top: 8px;
     }
     .input-row {
       display: flex;
@@ -1012,10 +1018,10 @@
         </div>
 
         </div>
-        <div style="padding: 16px 24px; border-top: 1px solid #eee;">
-          <button type="submit" class="btn save-btn">Save Settings</button>
-        </div>
       </form>
+      <div class="modal-footer">
+        <button type="submit" form="settingsForm" class="btn save-btn">Save Settings</button>
+      </div>
     </div>
   </div>
 
