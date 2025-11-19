@@ -748,6 +748,63 @@ function saveSettings(settings) {
   console.log('Settings saved');
 }
 
+// Connection status update function
+function updateConnectionStatus(state) {
+  const statusIndicator = document.getElementById('connectionStatus');
+  if (!statusIndicator) return;
+
+  // Update status indicator based on connection state
+  switch (state) {
+    case 'connected':
+      statusIndicator.className = 'status-indicator status-connected';
+      statusIndicator.title = 'Connected';
+      break;
+    case 'connecting':
+      statusIndicator.className = 'status-indicator status-connecting';
+      statusIndicator.title = 'Connecting...';
+      break;
+    case 'reconnecting':
+      statusIndicator.className = 'status-indicator status-reconnecting';
+      statusIndicator.title = 'Reconnecting...';
+      break;
+    case 'disconnected':
+      statusIndicator.className = 'status-indicator status-disconnected';
+      statusIndicator.title = 'Disconnected';
+      break;
+    default:
+      statusIndicator.className = 'status-indicator status-disconnected';
+      statusIndicator.title = 'Unknown';
+  }
+}
+
+// State restoration handler
+window.addEventListener('ws_state_restore', (event) => {
+  console.log('Restoring application state:', event.detail);
+
+  // Restore conversation history if available
+  if (event.detail.chatHistory) {
+    chatHistory = event.detail.chatHistory;
+    renderMessages();
+    console.log('Restored chat history');
+  }
+
+  // Restore other state as needed
+  if (event.detail.settings) {
+    // Could restore settings, but we load from localStorage anyway
+    console.log('State restoration: settings available');
+  }
+});
+
+// Periodically save state for recovery after reconnection
+setInterval(() => {
+  if (socket && socket.connectionState === 'connected') {
+    ResilientWebSocket.saveState({
+      chatHistory: chatHistory,
+      timestamp: new Date().toISOString()
+    });
+  }
+}, 5000); // Save every 5 seconds
+
 // Settings modal handlers
 const settingsModal = document.getElementById('settingsModal');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -884,7 +941,26 @@ document.getElementById("startBtn").onclick = async () => {
   const backendUrl = settings.backendUrl;
 
   console.log(`Connecting to backend: ${wsProto}//${backendUrl}/ws`);
-  socket = new WebSocket(`${wsProto}//${backendUrl}/ws`);
+  socket = new ResilientWebSocket(`${wsProto}//${backendUrl}/ws`);
+
+  // Handle connection state changes
+  socket.onconnectionstatechange = (event) => {
+    console.log('Connection state changed:', event);
+    updateConnectionStatus(event.newState);
+  };
+
+  // Handle reconnection attempts
+  socket.onreconnecting = (event) => {
+    statusDiv.textContent = `Reconnecting... (attempt ${event.attempt})`;
+    logEvent('connection', `Reconnecting (attempt ${event.attempt})`);
+  };
+
+  // Handle successful reconnection
+  socket.onreconnected = () => {
+    statusDiv.textContent = "Reconnected successfully!";
+    logEvent('connection', 'WebSocket reconnected');
+    // Settings will be resent automatically in onopen
+  };
 
   socket.onopen = async () => {
     statusDiv.textContent = "Connected. Activating mic and TTS…";
