@@ -676,7 +676,7 @@ speedSlider.addEventListener("input", (e) => {
 });
 
 // Import security functions
-import { loadSecureSettings, saveSecureSettings, decryptValue } from './security.js';
+import { loadSecureSettings, saveSecureSettings } from './security.js';
 
 // Settings management with encryption
 function loadSettings() {
@@ -716,10 +716,10 @@ function loadSettings() {
   return defaults;
 }
 
-async function saveSettings(settings) {
-  // Use secure save with encryption
-  await saveSecureSettings(settings);
-  console.log('Settings saved securely');
+function saveSettings(settings) {
+  // Save settings to localStorage
+  saveSecureSettings(settings);
+  console.log('Settings saved');
 }
 
 // Settings modal handlers
@@ -742,8 +742,8 @@ ttsVoiceSelect.onchange = () => {
   }
 };
 
-settingsBtn.onclick = async () => {
-  const settings = await loadSecureSettings();
+settingsBtn.onclick = () => {
+  const settings = loadSecureSettings();
 
   // Connection settings
   backendUrlInput.value = settings.backendUrl || '';
