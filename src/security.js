@@ -9,9 +9,13 @@
 function getBackendUrl() {
   const settings = JSON.parse(localStorage.getItem('voiceChatSettings') || '{}');
   const backendUrl = settings.backendUrl || 'localhost:8000';
-  const protocol = backendUrl.startsWith('localhost') || backendUrl.startsWith('127.0.0.1')
-    ? 'http'
-    : 'https';
+
+  // Check if it's a local/private IP address
+  const isLocalhost = backendUrl.startsWith('localhost') || backendUrl.startsWith('127.0.0.1');
+  const isPrivateIP = backendUrl.match(/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/);
+
+  // Use http for localhost and private IPs, https for everything else
+  const protocol = isLocalhost || isPrivateIP ? 'http' : 'https';
   return `${protocol}://${backendUrl}`;
 }
 
