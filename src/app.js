@@ -505,13 +505,23 @@ async function setupTTSPlayback() {
 }
 
 function cleanupAudio() {
+  // Clear AudioWorklet handlers before disconnect to prevent memory leaks
   if (micWorkletNode) {
+    micWorkletNode.port.onmessage = null;
     micWorkletNode.disconnect();
     micWorkletNode = null;
   }
   if (ttsWorkletNode) {
+    ttsWorkletNode.port.onmessage = null;
     ttsWorkletNode.disconnect();
     ttsWorkletNode = null;
+  }
+  // Clear WebSocket handlers before close to prevent memory leaks
+  if (socket) {
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    socket.onerror = null;
   }
   if (audioContext) {
     audioContext.close();
