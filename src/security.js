@@ -1,5 +1,12 @@
 /**
- * Security utilities for encrypting/decrypting sensitive data
+ * Security utilities for managing sensitive data
+ *
+ * WARNING: API keys are currently stored in plaintext in localStorage.
+ * This is a known security limitation. For production use, consider:
+ * - Using backend API key management
+ * - Implementing proper encryption with key management
+ * - Using sessionStorage instead (cleared on tab close)
+ * - Never committing API keys to version control
  */
 
 /**
@@ -63,6 +70,13 @@ export function loadSecureSettings() {
  * @param {object} settings - The settings to save
  */
 export function saveSecureSettings(settings) {
+  // Warn about API keys stored in plaintext
+  if (settings.apiKey || settings.geminiApiKey || settings.agentZeroApiKey) {
+    console.warn('⚠️ Security Warning: API keys are stored in plaintext in localStorage. ' +
+                 'Do not use this application on shared or public computers. ' +
+                 'For production use, implement proper API key management on the backend.');
+  }
+
   localStorage.setItem('voiceChatSettings', JSON.stringify(settings));
   console.log('Settings saved');
 }

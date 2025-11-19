@@ -368,12 +368,21 @@ const BATCH_SAMPLES = 2048;
 const HEADER_BYTES  = 8;
 const FRAME_BYTES   = BATCH_SAMPLES * 2;
 const MESSAGE_BYTES = HEADER_BYTES + FRAME_BYTES;
+const MAX_BUFFER_POOL_SIZE = 100;
 
 const bufferPool = [];
 let batchBuffer = null;
 let batchView = null;
 let batchInt16 = null;
 let batchOffset = 0;
+
+function pushToBufferPool(buffer) {
+  // Limit buffer pool size to prevent unbounded memory growth
+  if (bufferPool.length >= MAX_BUFFER_POOL_SIZE) {
+    bufferPool.shift(); // Remove oldest buffer
+  }
+  bufferPool.push(buffer);
+}
 
 function initBatch() {
   if (!batchBuffer) {
@@ -387,7 +396,7 @@ function initBatch() {
 function flushBatch() {
   // Don't send audio if mic is muted
   if (!micEnabled) {
-    bufferPool.push(batchBuffer);
+    pushToBufferPool(batchBuffer);
     batchBuffer = null;
     return;
   }
@@ -397,9 +406,16 @@ function flushBatch() {
   const flags = isTTSPlaying ? 1 : 0;
   batchView.setUint32(4, flags, false);
 
+  // Check WebSocket is connected before sending
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    pushToBufferPool(batchBuffer);
+    batchBuffer = null;
+    return;
+  }
+
   socket.send(batchBuffer);
 
-  bufferPool.push(batchBuffer);
+  pushToBufferPool(batchBuffer);
   batchBuffer = null;
 }
 
@@ -651,8 +667,8 @@ function handleJSONMessage(msg) {
 function escapeHtml(str) {
   return (str ?? '')
     .replace(/&/g, "&amp;")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
 
